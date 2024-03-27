@@ -2,7 +2,7 @@ import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import styled from "styled-components";
-import { auth } from "./firebases";
+import { auth } from "@/firebase";
 import { useNavigate } from "react-router-dom";
 
 type FormValues = {
