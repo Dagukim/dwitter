@@ -8,12 +8,17 @@ import styled, { createGlobalStyle } from "styled-components";
 import reset from "styled-reset";
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/loading-screen";
+import ProtectedRoute from "@/components/protected-route";
 import { auth } from "@/firebase";
 
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <Layout />,
+        element: (
+            <ProtectedRoute>
+                <Layout />
+            </ProtectedRoute>
+        ),
         children: [
             {
                 path: "",
