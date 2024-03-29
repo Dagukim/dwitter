@@ -19,6 +19,9 @@ const Button = styled.span`
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    &:hover {
+        opacity: 0.9;
+    }
 `;
 
 export function GithubButton() {

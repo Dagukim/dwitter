@@ -52,6 +52,9 @@ export const Switcher = styled.span`
     margin-top: 20px;
     a {
         color: #1d9bf0;
+        &:hover {
+            opacity: 0.9;
+        }
     }
 `;
 
@@ -59,4 +62,7 @@ export const ForgotButton = styled.span`
     margin-top: 20px;
     color: #1d9bf0;
     cursor: pointer;
+    &:hover {
+        opacity: 0.9;
+    }
 `;
