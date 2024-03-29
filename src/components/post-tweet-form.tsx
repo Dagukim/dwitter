@@ -1,3 +1,5 @@
+import { auth, db } from "@/firebase";
+import { addDoc, collection } from "firebase/firestore";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import styled from "styled-components";
@@ -61,22 +63,39 @@ const SubmitButton = styled.input`
     &:active {
         opacity: 0.9;
     }
+    &:disabled {
+        opacity: 0.5;
+    }
 `;
 
 export default function PostTweetForm() {
     const [isLoading, setLoading] = useState<boolean>(false);
-    const {
-        register,
-        handleSubmit,
-        watch,
-        formState: { errors },
-    } = useForm<FormValue>();
-    const onSubmit: SubmitHandler<FormValue> = (data) => {
-        console.log(data);
-    };
-
+    const { register, handleSubmit, watch, reset } = useForm<FormValue>();
     const tweetValue = watch("tweet");
     const fileValue = watch("file");
+
+    const disableSubmit =
+        (!tweetValue || tweetValue?.trim() === "") &&
+        (!fileValue || fileValue?.length === 0);
+    const onSubmit: SubmitHandler<FormValue> = async (data) => {
+        const user = auth.currentUser;
+        if (!user || isLoading || data.tweet === "" || data.tweet.length > 180)
+            return;
+        try {
+            setLoading(true);
+            await addDoc(collection(db, "tweets"), {
+                tweet: data.tweet,
+                createdAt: Date.now(),
+                username: user.displayName || "Anonymous",
+                userId: user.uid,
+            });
+            reset();
+        } catch (e) {
+            console.log(e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <Form onSubmit={handleSubmit(onSubmit)}>
@@ -84,10 +103,7 @@ export default function PostTweetForm() {
                 rows={5}
                 maxLength={180}
                 placeholder="What is happening?"
-                {...register("tweet", {
-                    validate: (value) =>
-                        value.trim().length > 0 || "Tweet cannot be empty.",
-                })}
+                {...register("tweet")}
             />
             <AttachFileButton htmlFor="file">
                 {fileValue && fileValue.length > 0
@@ -102,7 +118,7 @@ export default function PostTweetForm() {
             />
             <SubmitButton
                 type="submit"
-                disabled={(!tweetValue && !fileValue) || isLoading}
+                disabled={disableSubmit}
                 value={isLoading ? "Posting..." : "Post Tweet"}
             />
         </Form>
