@@ -19,8 +19,9 @@ const Button = styled.span`
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: 0.2s;
     &:hover {
-        opacity: 0.9;
+        opacity: 0.8;
     }
 `;
 

@@ -31,6 +31,7 @@ export const Input = styled.input`
         background-color: #1d9bf0;
         color: #fff;
         cursor: pointer;
+        transition: 0.2s;
         &:hover {
             opacity: 0.8;
         }
@@ -51,6 +52,7 @@ export const Message = styled.span`
 export const Switcher = styled.span`
     margin-top: 20px;
     a {
+        transition: 0.2s;
         color: #1d9bf0;
         &:hover {
             opacity: 0.9;
@@ -62,6 +64,7 @@ export const ForgotButton = styled.span`
     margin-top: 20px;
     color: #1d9bf0;
     cursor: pointer;
+    transition: 0.2s;
     &:hover {
         opacity: 0.9;
     }
