@@ -1,6 +1,7 @@
-import { auth, db } from "@/firebase";
-import { addDoc, collection } from "firebase/firestore";
-import { useState } from "react";
+import { auth, db, storage } from "@/firebase";
+import { addDoc, collection, updateDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import styled from "styled-components";
 
@@ -70,7 +71,8 @@ const SubmitButton = styled.input`
 
 export default function PostTweetForm() {
     const [isLoading, setLoading] = useState<boolean>(false);
-    const { register, handleSubmit, watch, reset } = useForm<FormValue>();
+    const { register, handleSubmit, watch, reset, resetField } =
+        useForm<FormValue>();
     const tweetValue = watch("tweet");
     const fileValue = watch("file");
 
@@ -79,16 +81,29 @@ export default function PostTweetForm() {
         (!fileValue || fileValue?.length === 0);
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const user = auth.currentUser;
-        if (!user || isLoading || data.tweet === "" || data.tweet.length > 180)
-            return;
+        if (!user || isLoading || data.tweet.length > 180) return;
+
         try {
             setLoading(true);
-            await addDoc(collection(db, "tweets"), {
-                tweet: data.tweet,
+            const doc = await addDoc(collection(db, "tweets"), {
+                tweet: data.tweet.trim() !== "" ? data.tweet : "",
                 createdAt: Date.now(),
                 username: user.displayName || "Anonymous",
                 userId: user.uid,
             });
+            if (data.file && data.file.length > 0) {
+                const file = data.file[0];
+                const locationRef = ref(
+                    storage,
+                    `tweets/${user.uid}-${user.displayName || "Anonymous"}/${
+                        doc.id
+                    }`
+                );
+                const result = await uploadBytes(locationRef, file);
+                const url = await getDownloadURL(result.ref);
+                await updateDoc(doc, { photo: url });
+            }
+
             reset();
         } catch (e) {
             console.log(e);
@@ -96,6 +111,16 @@ export default function PostTweetForm() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const file = fileValue?.[0];
+        if (file && file.size > 1024 * 1024) {
+            alert(
+                "The file is too large. Please select a file that is 1MB or smaller."
+            );
+            resetField("file");
+        }
+    }, [fileValue, resetField]);
 
     return (
         <Form onSubmit={handleSubmit(onSubmit)}>
