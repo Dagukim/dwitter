@@ -11,7 +11,7 @@ import styled from "styled-components";
 const Wrapper = styled.div`
     display: grid;
     gap: 20px;
-    grid-template-columns: 1fr 4fr;
+    grid-template-columns: 1fr 5fr;
     padding: 50px 0;
     width: 100%;
     max-width: 860px;
@@ -23,6 +23,9 @@ const Menu = styled.div`
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    top: 50px;
+    position: sticky;
+    height: fit-content;
 `;
 
 const MenuItem = styled.div`

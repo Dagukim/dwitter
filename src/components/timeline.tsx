@@ -7,9 +7,9 @@ import Tweet from "./tweet";
 export interface ITweet {
     id: string;
     photo?: string;
-    tweet: string;
+    tweet?: string;
     userId: string;
-    userName: string;
+    username: string;
     createdAt: number;
 }
 
@@ -22,14 +22,14 @@ export default function Timeline() {
             collection(db, "tweets"),
             orderBy("createdAt", "desc")
         );
-        const spanshot = await getDocs(tweetsQuery);
-        const tweets = spanshot.docs.map((doc) => {
-            const { tweet, createdAt, userId, userName, photo } = doc.data();
+        const snapshot = await getDocs(tweetsQuery);
+        const tweets = snapshot.docs.map((doc) => {
+            const { tweet, createdAt, userId, username, photo } = doc.data();
             return {
                 tweet,
                 createdAt,
                 userId,
-                userName,
+                username,
                 photo,
                 id: doc.id,
             };

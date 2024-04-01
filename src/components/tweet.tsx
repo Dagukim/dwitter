@@ -2,8 +2,6 @@ import { styled } from "styled-components";
 import { ITweet } from "./timeline";
 
 const Wrapper = styled.div`
-    display: grid;
-    grid-template-columns: 3fr 1fr;
     padding: 20px;
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 15px;
@@ -12,9 +10,10 @@ const Wrapper = styled.div`
 const Column = styled.div``;
 
 const Photo = styled.img`
-    width: 100px;
-    height: 100px;
+    max-width: 100%;
+    max-height: 500px;
     border-radius: 15px;
+    margin-top: 10px;
 `;
 
 const Username = styled.span`
@@ -27,12 +26,12 @@ const Payload = styled.p`
     font-size: 18px;
 `;
 
-export default function Tweet({ userName, photo, tweet }: ITweet) {
+export default function Tweet({ username, photo, tweet }: ITweet) {
     return (
         <Wrapper>
             <Column>
-                <Username>{userName}</Username>
-                <Payload>{tweet}</Payload>
+                <Username>{username}</Username>
+                {tweet ? <Payload>{tweet}</Payload> : null}
             </Column>
             {photo ? (
                 <Column>

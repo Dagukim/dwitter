@@ -44,6 +44,17 @@ const GlobalStyles = createGlobalStyle`
     ${reset};
     * {
       box-sizing: border-box;
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background-color: #9f9f9f;
+        border-radius: 10px;
+      }
+      &::-webkit-scrollbar-track {
+        background: #2c2c2c;
+        border-radius: 10px;
+      }
     }
     body {
       background-color: black;
@@ -54,7 +65,7 @@ const GlobalStyles = createGlobalStyle`
 `;
 
 const Wrapper = styled.div`
-    height: 100vh;
+    height: 100%;
     display: flex;
     justify-content: center;
 `;
