@@ -3,9 +3,10 @@ import Timeline from "@/components/timeline";
 import styled from "styled-components";
 
 const Wrapper = styled.div`
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 50px;
-    grid-template-rows: 1fr 5fr;
+    max-width: 700px;
 `;
 
 export default function Home() {
