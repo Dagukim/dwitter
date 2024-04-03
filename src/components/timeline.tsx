@@ -5,11 +5,11 @@ import {
     onSnapshot,
     orderBy,
     query,
+    Unsubscribe,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Tweet from "./tweet";
-import { Unsubscribe } from "firebase/auth";
 
 export interface ITweet {
     id: string;
@@ -28,6 +28,7 @@ const Wrapper = styled.div`
 
 export default function Timeline() {
     const [tweets, setTweet] = useState<ITweet[]>([]);
+    const [editingTweetId, setEditingTweetId] = useState<string | null>(null);
 
     useEffect(() => {
         let unsubscribe: Unsubscribe | null = null;
@@ -60,10 +61,19 @@ export default function Timeline() {
         };
     }, []);
 
+    const handleEdit = (tweetId: string) => {
+        setEditingTweetId((prev) => (prev === tweetId ? null : tweetId));
+    };
+
     return (
         <Wrapper>
             {tweets.map((tweet) => (
-                <Tweet key={tweet.id} {...tweet} />
+                <Tweet
+                    key={tweet.id}
+                    {...tweet}
+                    isEditing={editingTweetId === tweet.id}
+                    onEditToggle={() => handleEdit(tweet.id)}
+                />
             ))}
         </Wrapper>
     );

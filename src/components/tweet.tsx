@@ -1,10 +1,11 @@
 import { styled } from "styled-components";
 import { ITweet } from "./timeline";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faPen, faTrash, faX } from "@fortawesome/free-solid-svg-icons";
 import { auth, db, storage } from "@/firebase";
 import { deleteDoc, doc } from "firebase/firestore";
 import { deleteObject, ref } from "firebase/storage";
+import EditTweet from "./edit-tweet";
 
 const Wrapper = styled.div`
     padding: 20px;
@@ -18,6 +19,7 @@ const Photo = styled.img`
     max-height: 500px;
     border-radius: 15px;
     margin-top: 10px;
+    background-color: #fff;
 `;
 
 const Username = styled.span`
@@ -33,24 +35,43 @@ const Payload = styled.p`
     word-wrap: break-word;
 `;
 
-const DeleteButton = styled.button`
+const TweetActions = styled.div`
+    display: flex;
     position: absolute;
     top: 20px;
     right: 20px;
+`;
+
+const ActionButton = styled.button<{ $hoverColor?: string }>`
+    width: 18px;
+    height: 18px;
+    margin-left: 8px;
+    padding: 0;
     border: none;
     background: none;
     color: white;
     transition: 0.2s;
     cursor: pointer;
 
+    &:first-child {
+        margin: 0;
+    }
     &:hover,
     &:active {
-        color: #ff0000;
-        scale: 1.3;
+        color: ${(props) => props.$hoverColor};
+        transform: scale(1.3);
     }
 `;
 
-export default function Tweet({ username, photo, tweet, userId, id }: ITweet) {
+export default function Tweet({
+    username,
+    photo,
+    tweet,
+    userId,
+    id,
+    isEditing,
+    onEditToggle,
+}: ITweet & { isEditing: boolean; onEditToggle: () => void }) {
     const user = auth.currentUser;
     const onDelete = async () => {
         const ok = confirm("Are you sure you want to delete this tweet?");
@@ -76,12 +97,35 @@ export default function Tweet({ username, photo, tweet, userId, id }: ITweet) {
         <Wrapper>
             <Username>{username}</Username>
             {user?.uid === userId ? (
-                <DeleteButton onClick={onDelete}>
-                    <FontAwesomeIcon icon={faTrash} size="lg" />
-                </DeleteButton>
+                <TweetActions>
+                    <ActionButton onClick={onEditToggle}>
+                        {isEditing ? (
+                            <FontAwesomeIcon icon={faX} size="lg" />
+                        ) : (
+                            <FontAwesomeIcon icon={faPen} size="lg" />
+                        )}
+                    </ActionButton>
+                    <ActionButton onClick={onDelete} $hoverColor="#f4212e">
+                        <FontAwesomeIcon icon={faTrash} size="lg" />
+                    </ActionButton>
+                </TweetActions>
             ) : null}
-            {tweet ? <Payload>{tweet}</Payload> : null}
-            {photo ? <Photo src={photo} /> : null}
+
+            {isEditing ? (
+                <EditTweet
+                    tweet={tweet}
+                    userId={userId}
+                    id={id}
+                    photo={photo}
+                    username={username}
+                    onFinishEdit={onEditToggle}
+                />
+            ) : (
+                <div>
+                    {tweet ? <Payload>{tweet}</Payload> : null}
+                    {photo ? <Photo src={photo} /> : null}
+                </div>
+            )}
         </Wrapper>
     );
 }
