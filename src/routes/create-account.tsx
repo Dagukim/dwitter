@@ -1,7 +1,7 @@
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { auth } from "@/firebase";
+import { auth, db } from "@/firebase";
 import { Link, useNavigate } from "react-router-dom";
 import { FirebaseError } from "firebase/app";
 import {
@@ -15,6 +15,7 @@ import {
 import { GithubButton } from "@/components/github-btn";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
+import { doc, setDoc } from "firebase/firestore";
 
 type FormValues = {
     name: string;
@@ -40,8 +41,13 @@ export default function CreateAccount() {
                 data.email,
                 data.password
             );
-            console.log(credentials.user);
             await updateProfile(credentials.user, { displayName: data.name });
+            const userRef = doc(db, "users", credentials.user.uid);
+            await setDoc(userRef, {
+                username: data.name,
+                email: data.email,
+                avatar: "",
+            });
             nav("/");
         } catch (e) {
             if (e instanceof FirebaseError) {

@@ -1,7 +1,12 @@
-import { auth } from "@/firebase";
+import { auth, db } from "@/firebase";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { GithubAuthProvider, signInWithPopup } from "firebase/auth";
+import {
+    GithubAuthProvider,
+    signInWithPopup,
+    updateProfile,
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
@@ -29,8 +34,21 @@ export function GithubButton() {
     const nav = useNavigate();
     const onClick = async () => {
         try {
-            const provieder = new GithubAuthProvider();
-            await signInWithPopup(auth, provieder);
+            const provider = new GithubAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const userRef = doc(db, "users", result.user.uid);
+            const docSnap = await getDoc(userRef);
+
+            if (!docSnap.exists()) {
+                await updateProfile(result.user, {
+                    displayName: result.user.email?.replace(/@.*/, "#github"),
+                });
+                await setDoc(userRef, {
+                    username: result.user.displayName,
+                    email: result.user.email,
+                    avatar: result.user.photoURL,
+                });
+            }
             nav("/");
         } catch (e) {
             console.log(e);

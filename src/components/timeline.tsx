@@ -1,6 +1,8 @@
 import { db } from "@/firebase";
 import {
     collection,
+    doc,
+    getDoc,
     limit,
     onSnapshot,
     orderBy,
@@ -17,6 +19,7 @@ export interface ITweet {
     tweet?: string;
     userId: string;
     username: string;
+    userAvatarUrl?: string | null | undefined;
     createdAt: number;
 }
 
@@ -30,6 +33,15 @@ export default function Timeline() {
     const [tweets, setTweet] = useState<ITweet[]>([]);
     const [editingTweetId, setEditingTweetId] = useState<string | null>(null);
 
+    const getUserPhotoURL = async (userId: string) => {
+        const userDocRef = doc(db, "users", userId);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+            return userDocSnap.data().avatar;
+        }
+        return undefined;
+    };
+
     useEffect(() => {
         let unsubscribe: Unsubscribe | null = null;
         const fetchTweets = async () => {
@@ -38,19 +50,23 @@ export default function Timeline() {
                 orderBy("createdAt", "desc"),
                 limit(25)
             );
-            unsubscribe = await onSnapshot(tweetsQuery, (snapshot) => {
-                const tweets = snapshot.docs.map((doc) => {
-                    const { tweet, createdAt, userId, username, photo } =
-                        doc.data();
-                    return {
-                        tweet,
-                        createdAt,
-                        userId,
-                        username,
-                        photo,
-                        id: doc.id,
-                    };
-                });
+            unsubscribe = onSnapshot(tweetsQuery, async (snapshot) => {
+                const tweets: ITweet[] = await Promise.all(
+                    snapshot.docs.map(async (doc) => {
+                        const { tweet, createdAt, userId, username, photo } =
+                            doc.data();
+                        const userAvatarUrl = await getUserPhotoURL(userId);
+                        return {
+                            tweet,
+                            createdAt,
+                            userId,
+                            username,
+                            photo,
+                            userAvatarUrl,
+                            id: doc.id,
+                        };
+                    })
+                );
                 setTweet(tweets);
             });
         };

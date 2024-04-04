@@ -1,17 +1,42 @@
 import { styled } from "styled-components";
 import { ITweet } from "./timeline";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faTrash, faX } from "@fortawesome/free-solid-svg-icons";
+import { faPen, faTrash, faUser, faX } from "@fortawesome/free-solid-svg-icons";
 import { auth, db, storage } from "@/firebase";
 import { deleteDoc, doc } from "firebase/firestore";
 import { deleteObject, ref } from "firebase/storage";
 import EditTweet from "./edit-tweet";
 
 const Wrapper = styled.div`
+    display: flex;
     padding: 20px;
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 15px;
     position: relative;
+`;
+
+const UserPhotoContainer = styled.div`
+    flex: 0 0 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 8px;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    border-radius: 50%;
+    background-color: #1d9bf0;
+    cursor: pointer;
+`;
+
+const TweetBodyContainer = styled.div`
+    width: 100%;
+`;
+
+const UserAvatar = styled.img`
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 `;
 
 const Photo = styled.img`
@@ -26,6 +51,7 @@ const Username = styled.span`
     margin-bottom: 10px;
     font-weight: 600;
     font-size: 15px;
+    cursor: pointer;
 `;
 
 const Payload = styled.p`
@@ -69,6 +95,7 @@ export default function Tweet({
     tweet,
     userId,
     id,
+    userAvatarUrl,
     isEditing,
     onEditToggle,
 }: ITweet & { isEditing: boolean; onEditToggle: () => void }) {
@@ -95,37 +122,46 @@ export default function Tweet({
 
     return (
         <Wrapper>
-            <Username>{username}</Username>
-            {user?.uid === userId ? (
-                <TweetActions>
-                    <ActionButton onClick={onEditToggle}>
-                        {isEditing ? (
-                            <FontAwesomeIcon icon={faX} size="lg" />
-                        ) : (
-                            <FontAwesomeIcon icon={faPen} size="lg" />
-                        )}
-                    </ActionButton>
-                    <ActionButton onClick={onDelete} $hoverColor="#f4212e">
-                        <FontAwesomeIcon icon={faTrash} size="lg" />
-                    </ActionButton>
-                </TweetActions>
-            ) : null}
+            <UserPhotoContainer>
+                {userAvatarUrl ? (
+                    <UserAvatar src={userAvatarUrl} alt="user-photo" />
+                ) : (
+                    <FontAwesomeIcon icon={faUser} size="1x" />
+                )}
+            </UserPhotoContainer>
+            <TweetBodyContainer>
+                <Username>{username}</Username>
+                {user?.uid === userId ? (
+                    <TweetActions>
+                        <ActionButton onClick={onEditToggle}>
+                            {isEditing ? (
+                                <FontAwesomeIcon icon={faX} size="lg" />
+                            ) : (
+                                <FontAwesomeIcon icon={faPen} size="lg" />
+                            )}
+                        </ActionButton>
+                        <ActionButton onClick={onDelete} $hoverColor="#f4212e">
+                            <FontAwesomeIcon icon={faTrash} size="lg" />
+                        </ActionButton>
+                    </TweetActions>
+                ) : null}
 
-            {isEditing ? (
-                <EditTweet
-                    tweet={tweet}
-                    userId={userId}
-                    id={id}
-                    photo={photo}
-                    username={username}
-                    onFinishEdit={onEditToggle}
-                />
-            ) : (
-                <div>
-                    {tweet ? <Payload>{tweet}</Payload> : null}
-                    {photo ? <Photo src={photo} /> : null}
-                </div>
-            )}
+                {isEditing ? (
+                    <EditTweet
+                        tweet={tweet}
+                        userId={userId}
+                        id={id}
+                        photo={photo}
+                        username={username}
+                        onFinishEdit={onEditToggle}
+                    />
+                ) : (
+                    <div>
+                        {tweet ? <Payload>{tweet}</Payload> : null}
+                        {photo ? <Photo src={photo} /> : null}
+                    </div>
+                )}
+            </TweetBodyContainer>
         </Wrapper>
     );
 }

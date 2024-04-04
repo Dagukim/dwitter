@@ -7,10 +7,12 @@ import { updateProfile } from "firebase/auth";
 import {
     Unsubscribe,
     collection,
+    doc,
     limit,
     onSnapshot,
     orderBy,
     query,
+    updateDoc,
     where,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -38,6 +40,8 @@ const AvatarUpload = styled.label`
 
 const AvatarImg = styled.img`
     width: 100%;
+    height: 100%;
+    object-fit: cover;
 `;
 
 const AvatarInput = styled.input`
@@ -65,11 +69,15 @@ export default function Profile() {
         if (!user) return;
         if (files && files.length === 1) {
             const file = files[0];
-            const locationRef = ref(storage, `user/${user.uid}/avatar`);
+            const locationRef = ref(storage, `users/${user.uid}/avatar`);
             const result = await uploadBytes(locationRef, file);
             const avatarUrl = await getDownloadURL(result.ref);
             setAvatar(avatarUrl);
             await updateProfile(user, { photoURL: avatarUrl });
+
+            const userDocRef = doc(db, "users", user.uid);
+            const userAvatar: { avatar: string } = { avatar: avatarUrl };
+            await updateDoc(userDocRef, userAvatar);
         }
     };
 
@@ -87,19 +95,22 @@ export default function Profile() {
                 orderBy("createdAt", "desc"),
                 limit(25)
             );
-            unsubscribe = await onSnapshot(tweetsQuery, (snapshot) => {
-                const tweets = snapshot.docs.map((doc) => {
-                    const { tweet, createdAt, userId, username, photo } =
-                        doc.data();
-                    return {
-                        tweet,
-                        createdAt,
-                        userId,
-                        username,
-                        photo,
-                        id: doc.id,
-                    };
-                });
+            unsubscribe = onSnapshot(tweetsQuery, async (snapshot) => {
+                const tweets: ITweet[] = await Promise.all(
+                    snapshot.docs.map((doc) => {
+                        const { tweet, createdAt, userId, username, photo } =
+                            doc.data();
+                        return {
+                            tweet,
+                            createdAt,
+                            userId,
+                            username,
+                            photo,
+                            userAvatarUrl: avatar,
+                            id: doc.id,
+                        };
+                    })
+                );
                 setTweet(tweets);
             });
         };
@@ -108,13 +119,13 @@ export default function Profile() {
         return () => {
             unsubscribe && unsubscribe();
         };
-    }, [user]);
+    }, [avatar, user]);
 
     return (
         <Wrapper>
             <AvatarUpload htmlFor="avatar">
                 {avatar ? (
-                    <AvatarImg src={avatar} />
+                    <AvatarImg src={avatar} alt="avatar" />
                 ) : (
                     <FontAwesomeIcon icon={faUser} size="2xl" />
                 )}
