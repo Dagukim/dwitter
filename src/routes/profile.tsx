@@ -1,9 +1,20 @@
-import { auth, storage } from "@/firebase";
+import { ITweet } from "@/components/timeline";
+import Tweet from "@/components/tweet";
+import { auth, db, storage } from "@/firebase";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { updateProfile } from "firebase/auth";
+import {
+    Unsubscribe,
+    collection,
+    limit,
+    onSnapshot,
+    orderBy,
+    query,
+    where,
+} from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 
 const Wrapper = styled.div`
@@ -37,9 +48,18 @@ const Name = styled.span`
     font-size: 22px;
 `;
 
+const Tweets = styled.div`
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+`;
+
 export default function Profile() {
     const user = auth.currentUser;
     const [avatar, setAvatar] = useState(user?.photoURL);
+    const [tweets, setTweet] = useState<ITweet[]>([]);
+    const [editingTweetId, setEditingTweetId] = useState<string | null>(null);
     const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const { files } = e.target;
         if (!user) return;
@@ -52,6 +72,43 @@ export default function Profile() {
             await updateProfile(user, { photoURL: avatarUrl });
         }
     };
+
+    const handleEdit = (tweetId: string) => {
+        setEditingTweetId((prev) => (prev === tweetId ? null : tweetId));
+    };
+
+    useEffect(() => {
+        if (!user) return;
+        let unsubscribe: Unsubscribe | null = null;
+        const fetchTweets = async () => {
+            const tweetsQuery = query(
+                collection(db, "tweets"),
+                where("userId", "==", user.uid),
+                orderBy("createdAt", "desc"),
+                limit(25)
+            );
+            unsubscribe = await onSnapshot(tweetsQuery, (snapshot) => {
+                const tweets = snapshot.docs.map((doc) => {
+                    const { tweet, createdAt, userId, username, photo } =
+                        doc.data();
+                    return {
+                        tweet,
+                        createdAt,
+                        userId,
+                        username,
+                        photo,
+                        id: doc.id,
+                    };
+                });
+                setTweet(tweets);
+            });
+        };
+        fetchTweets();
+
+        return () => {
+            unsubscribe && unsubscribe();
+        };
+    }, [user]);
 
     return (
         <Wrapper>
@@ -69,6 +126,16 @@ export default function Profile() {
                 accept="image/*"
             />
             <Name>{user?.displayName ?? "Anonymous"}</Name>
+            <Tweets>
+                {tweets.map((tweet) => (
+                    <Tweet
+                        key={tweet.id}
+                        isEditing={editingTweetId === tweet.id}
+                        onEditToggle={() => handleEdit(tweet.id)}
+                        {...tweet}
+                    />
+                ))}
+            </Tweets>
         </Wrapper>
     );
 }
