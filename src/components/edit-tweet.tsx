@@ -65,9 +65,6 @@ export default function EditTweet({
 
             if (data.file && data.file.length > 0) {
                 const file = data.file[0];
-                if (photo) {
-                    await deleteObject(locationRef);
-                }
                 const result = await uploadBytes(locationRef, file);
                 const url = await getDownloadURL(result.ref);
                 tweetData.photo = url;
