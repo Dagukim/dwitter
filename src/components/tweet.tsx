@@ -18,18 +18,18 @@ const Photo = styled.img`
     max-width: 100%;
     max-height: 500px;
     border-radius: 15px;
-    margin-top: 10px;
     background-color: #fff;
 `;
 
 const Username = styled.span`
     display: block;
+    margin-bottom: 10px;
     font-weight: 600;
     font-size: 15px;
 `;
 
 const Payload = styled.p`
-    margin-top: 10px;
+    margin-bottom: 10px;
     font-size: 15px;
     line-height: 24px;
     word-wrap: break-word;
