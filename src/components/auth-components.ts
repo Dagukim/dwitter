@@ -27,6 +27,7 @@ export const Input = styled.input`
     border: none;
     width: 100%;
     font-size: 16px;
+    transition: 0.2s;
     &[type="submit"] {
         background-color: #1d9bf0;
         color: #fff;

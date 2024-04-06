@@ -18,6 +18,7 @@ export const TextArea = styled.textarea`
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
         Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
         sans-serif;
+    transition: 0.2s;
     &::placeholder {
         font-size: 16px;
     }

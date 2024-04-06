@@ -17,6 +17,7 @@ const Form = styled.form`
     margin-top: 30px;
     display: flex;
     flex-direction: column;
+    gap: 12px;
     width: 100%;
 `;
 
@@ -27,7 +28,6 @@ const Label = styled.label`
 
 const Input = styled.input`
     padding: 10px 20px;
-    margin: 12px 0 12px;
     border: 1px solid #ddd;
     border-radius: 50px;
     width: 100%;

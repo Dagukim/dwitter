@@ -13,6 +13,7 @@ const Wrapper = styled.div`
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 15px;
     position: relative;
+    gap: 8px;
 `;
 
 const UserPhotoContainer = styled.div`
@@ -20,7 +21,6 @@ const UserPhotoContainer = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-right: 8px;
     width: 40px;
     height: 40px;
     overflow: hidden;
@@ -30,7 +30,13 @@ const UserPhotoContainer = styled.div`
 `;
 
 const TweetBodyContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     width: 100%;
+    overflow-x: auto;
+    word-break: break-word;
+    align-items: baseline;
 `;
 
 const UserAvatar = styled.img`
@@ -48,17 +54,18 @@ const Photo = styled.img`
 
 const Username = styled.span`
     display: block;
-    margin-bottom: 10px;
     font-weight: 600;
     font-size: 15px;
     cursor: pointer;
 `;
 
+const Box = styled.div`
+    white-space: pre-wrap;
+`;
+
 const Payload = styled.p`
-    margin-bottom: 10px;
     font-size: 15px;
     line-height: 24px;
-    word-wrap: break-word;
 `;
 
 const TweetActions = styled.div`
@@ -140,7 +147,7 @@ export default function Tweet({
                                 <FontAwesomeIcon icon={faPen} size="lg" />
                             )}
                         </ActionButton>
-                        <ActionButton onClick={onDelete} $hoverColor="#f4212e">
+                        <ActionButton onClick={onDelete} $hoverColor="tomato">
                             <FontAwesomeIcon icon={faTrash} size="lg" />
                         </ActionButton>
                     </TweetActions>
@@ -152,14 +159,13 @@ export default function Tweet({
                         userId={userId}
                         id={id}
                         photo={photo}
-                        username={username}
                         onFinishEdit={onEditToggle}
                     />
                 ) : (
-                    <div>
+                    <Box>
                         {tweet ? <Payload>{tweet}</Payload> : null}
-                        {photo ? <Photo src={photo} /> : null}
-                    </div>
+                        {photo ? <Photo src={photo} alt="photo" /> : null}
+                    </Box>
                 )}
             </TweetBodyContainer>
         </Wrapper>

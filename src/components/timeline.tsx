@@ -18,7 +18,7 @@ export interface ITweet {
     photo?: string;
     tweet?: string;
     userId: string;
-    username: string;
+    username: string | null | undefined;
     userAvatarUrl?: string | null | undefined;
     createdAt: number;
 }
@@ -33,11 +33,14 @@ export default function Timeline() {
     const [tweets, setTweet] = useState<ITweet[]>([]);
     const [editingTweetId, setEditingTweetId] = useState<string | null>(null);
 
-    const getUserPhotoURL = async (userId: string) => {
+    const getUserInfo = async (userId: string) => {
         const userDocRef = doc(db, "users", userId);
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
-            return userDocSnap.data().avatar;
+            return {
+                username: userDocSnap.data().username,
+                avatar: userDocSnap.data().avatar,
+            };
         }
         return undefined;
     };
@@ -53,16 +56,15 @@ export default function Timeline() {
             unsubscribe = onSnapshot(tweetsQuery, async (snapshot) => {
                 const tweets: ITweet[] = await Promise.all(
                     snapshot.docs.map(async (doc) => {
-                        const { tweet, createdAt, userId, username, photo } =
-                            doc.data();
-                        const userAvatarUrl = await getUserPhotoURL(userId);
+                        const { tweet, createdAt, userId, photo } = doc.data();
+                        const userInfo = await getUserInfo(userId);
                         return {
                             tweet,
                             createdAt,
                             userId,
-                            username,
+                            username: userInfo?.username,
                             photo,
-                            userAvatarUrl,
+                            userAvatarUrl: userInfo?.avatar,
                             id: doc.id,
                         };
                     })

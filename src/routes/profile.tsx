@@ -1,21 +1,19 @@
+import Modal from "@/components/Modal/modal";
+import ProfileEditForm from "@/components/profile-edit-form";
 import { ITweet } from "@/components/timeline";
 import Tweet from "@/components/tweet";
-import { auth, db, storage } from "@/firebase";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { auth, db } from "@/firebase";
+import { faPen, faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { updateProfile } from "firebase/auth";
 import {
     Unsubscribe,
     collection,
-    doc,
     limit,
     onSnapshot,
     orderBy,
     query,
-    updateDoc,
     where,
 } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 
@@ -26,13 +24,20 @@ const Wrapper = styled.div`
     gap: 20px;
 `;
 
-const AvatarUpload = styled.label`
+const InfoContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+`;
+
+const AvatarBox = styled.label`
     width: 80px;
     overflow: hidden;
     height: 80px;
     border-radius: 50%;
     background-color: #1d9bf0;
-    cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -44,12 +49,29 @@ const AvatarImg = styled.img`
     object-fit: cover;
 `;
 
-const AvatarInput = styled.input`
-    display: none;
-`;
-
 const Name = styled.span`
     font-size: 22px;
+`;
+
+const AboutMe = styled.pre`
+    white-space: pre-wrap;
+    word-break: break-all;
+`;
+
+const EditProfileButton = styled.button`
+    display: flex;
+    gap: 4px;
+    padding: 8px 12px;
+    border: 1px solid #555;
+    border-radius: 20px;
+    background: transparent;
+    font-size: 14px;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+    &:hover {
+        background-color: #333;
+    }
 `;
 
 const Tweets = styled.div`
@@ -62,24 +84,14 @@ const Tweets = styled.div`
 export default function Profile() {
     const user = auth.currentUser;
     const [avatar, setAvatar] = useState(user?.photoURL);
+    const [showModal, setShowModal] = useState(false);
     const [tweets, setTweet] = useState<ITweet[]>([]);
     const [editingTweetId, setEditingTweetId] = useState<string | null>(null);
-    const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { files } = e.target;
-        if (!user) return;
-        if (files && files.length === 1) {
-            const file = files[0];
-            const locationRef = ref(storage, `users/${user.uid}/avatar`);
-            const result = await uploadBytes(locationRef, file);
-            const avatarUrl = await getDownloadURL(result.ref);
-            setAvatar(avatarUrl);
-            await updateProfile(user, { photoURL: avatarUrl });
 
-            const userDocRef = doc(db, "users", user.uid);
-            const userAvatar: { avatar: string } = { avatar: avatarUrl };
-            await updateDoc(userDocRef, userAvatar);
-        }
+    const openModal = () => {
+        setShowModal(true);
     };
+    const closeModal = () => setShowModal(false);
 
     const handleEdit = (tweetId: string) => {
         setEditingTweetId((prev) => (prev === tweetId ? null : tweetId));
@@ -98,13 +110,12 @@ export default function Profile() {
             unsubscribe = onSnapshot(tweetsQuery, async (snapshot) => {
                 const tweets: ITweet[] = await Promise.all(
                     snapshot.docs.map((doc) => {
-                        const { tweet, createdAt, userId, username, photo } =
-                            doc.data();
+                        const { tweet, createdAt, userId, photo } = doc.data();
                         return {
                             tweet,
                             createdAt,
                             userId,
-                            username,
+                            username: user.displayName,
                             photo,
                             userAvatarUrl: avatar,
                             id: doc.id,
@@ -119,24 +130,25 @@ export default function Profile() {
         return () => {
             unsubscribe && unsubscribe();
         };
-    }, [avatar, user]);
+    }, [avatar, user?.displayName, user]);
 
     return (
         <Wrapper>
-            <AvatarUpload htmlFor="avatar">
-                {avatar ? (
-                    <AvatarImg src={avatar} alt="avatar" />
-                ) : (
-                    <FontAwesomeIcon icon={faUser} size="2xl" />
-                )}
-            </AvatarUpload>
-            <AvatarInput
-                onChange={onAvatarChange}
-                type="file"
-                id="avatar"
-                accept="image/*"
-            />
-            <Name>{user?.displayName ?? "Anonymous"}</Name>
+            <InfoContainer>
+                <AvatarBox htmlFor="avatar">
+                    {avatar ? (
+                        <AvatarImg src={avatar} alt="avatar" />
+                    ) : (
+                        <FontAwesomeIcon icon={faUser} size="2xl" />
+                    )}
+                </AvatarBox>
+                <Name>{user?.displayName ?? "Anonymous"}</Name>
+                <AboutMe>about me</AboutMe>
+                <EditProfileButton onClick={openModal}>
+                    edit profile
+                    <FontAwesomeIcon icon={faPen} size="1x" />
+                </EditProfileButton>
+            </InfoContainer>
             <Tweets>
                 {tweets.map((tweet) => (
                     <Tweet
@@ -147,6 +159,15 @@ export default function Profile() {
                     />
                 ))}
             </Tweets>
+            {showModal && user?.uid ? (
+                <Modal onClose={closeModal}>
+                    <ProfileEditForm
+                        userId={user.uid}
+                        setPhoto={setAvatar}
+                        onClose={closeModal}
+                    />
+                </Modal>
+            ) : null}
         </Wrapper>
     );
 }

@@ -31,14 +31,12 @@ export default function EditTweet({
     photo,
     id,
     userId,
-    username,
     onFinishEdit,
 }: {
     tweet?: string;
     photo?: string;
     id: string;
     userId: string;
-    username: string;
     onFinishEdit: () => void;
 }) {
     const [isLoading, setLoading] = useState<boolean>(false);
@@ -58,10 +56,7 @@ export default function EditTweet({
             const tweetData: { tweet: string; photo?: string } = {
                 tweet: data?.tweet,
             };
-            const locationRef = ref(
-                storage,
-                `tweets/${userId}-${username || "Anonymous"}/${id}`
-            );
+            const locationRef = ref(storage, `tweets/${userId}/${id}`);
 
             if (data.file && data.file.length > 0) {
                 const file = data.file[0];

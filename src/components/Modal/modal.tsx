@@ -13,15 +13,15 @@ const Frame = styled.div`
     width: 100%;
     height: 100vh;
     z-index: 100;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(91, 112, 131, 0.4);
 `;
 const ModalContent = styled.div`
     position: relative;
     padding: 42px;
     max-width: 500px;
-    background-color: white;
-    border-radius: 8px;
-    color: #707070;
+    background-color: black;
+    border-radius: 16px;
+    color: #fff;
 `;
 
 const CloseButton = styled.span`
@@ -30,7 +30,7 @@ const CloseButton = styled.span`
     right: 20px;
     background: none;
     cursor: pointer;
-    color: #555;
+    color: #fff;
 `;
 
 export default function Modal({
