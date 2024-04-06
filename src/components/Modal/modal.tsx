@@ -18,7 +18,7 @@ const Frame = styled.div`
 const ModalContent = styled.div`
     position: relative;
     padding: 42px;
-    max-width: 500px;
+    width: 500px;
     background-color: black;
     border-radius: 16px;
     color: #fff;

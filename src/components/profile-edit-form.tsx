@@ -1,4 +1,5 @@
 import { auth, db, storage } from "@/firebase";
+import { UserData } from "@/routes/profile";
 import { faCamera, faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { updateProfile } from "firebase/auth";
@@ -11,7 +12,7 @@ import styled from "styled-components";
 type FormValue = {
     file: FileList | null;
     name: string | null | undefined;
-    // aboutMe?: string;
+    aboutMe?: string | null;
 };
 
 const Title = styled.h1`
@@ -97,33 +98,35 @@ const Input = styled.input`
     }
 `;
 
-// const TextArea = styled.textarea`
-//     border: 2px solid #ddd;
-//     padding: 20px;
-//     border-radius: 10px;
-//     font-size: 16px;
-//     background-color: #000;
-//     color: #fff;
-//     width: 100%;
-//     resize: none;
-//     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-//         Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
-//         sans-serif;
-//     transition: 0.2s;
-//     &:focus,
-//     &:active {
-//         outline: none;
-//         border-color: #1d9bf0;
-//     }
-// `;
+const TextArea = styled.textarea`
+    border: 2px solid #ddd;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 16px;
+    background-color: #000;
+    color: #fff;
+    width: 100%;
+    resize: none;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+        sans-serif;
+    transition: 0.2s;
+    &:focus,
+    &:active {
+        outline: none;
+        border-color: #1d9bf0;
+    }
+`;
 
 export default function ProfileEditForm({
     userId,
-    setPhoto,
+    userData,
+    setUserData,
     onClose,
 }: {
     userId: string;
-    setPhoto: (url: string) => void;
+    userData?: UserData;
+    setUserData: (data: UserData) => void;
     onClose: () => void;
 }) {
     const user = auth.currentUser;
@@ -131,7 +134,7 @@ export default function ProfileEditForm({
     const [isLoading, setLoading] = useState<boolean>(false);
 
     const { register, handleSubmit, watch } = useForm<FormValue>({
-        defaultValues: { name: user?.displayName },
+        defaultValues: { name: userData?.name, aboutMe: userData?.aboutMe },
     });
     const nameValue = watch("name");
     const fileValue = watch("file");
@@ -140,8 +143,10 @@ export default function ProfileEditForm({
         try {
             setLoading(true);
             const userDocRef = doc(db, "users", userId);
-            const userData: { username: string; avatar?: string } = {
-                username: data?.name,
+            const updateData: UserData = {
+                name: data.name,
+                avatar: userData?.avatar,
+                aboutMe: data.aboutMe,
             };
             const locationRef = ref(storage, `users/${userId}/avatar`);
 
@@ -149,14 +154,15 @@ export default function ProfileEditForm({
                 const file = data.file[0];
                 const result = await uploadBytes(locationRef, file);
                 const url = await getDownloadURL(result.ref);
-                userData.avatar = url;
-                setPhoto(url);
+                updateData.avatar = url;
             }
             await updateProfile(user, {
-                displayName: userData.username,
-                photoURL: userData.avatar && userData.avatar,
+                displayName: updateData.name,
+                photoURL: updateData.avatar ?? "",
             });
-            await updateDoc(userDocRef, userData);
+            await updateDoc(userDocRef, updateData);
+            setUserData(() => updateData);
+
             onClose();
         } catch (e) {
             console.log(e);
@@ -166,10 +172,11 @@ export default function ProfileEditForm({
     };
 
     useEffect(() => {
-        if (!fileValue) return;
         if (fileValue && fileValue.length === 1) {
             const url = URL.createObjectURL(fileValue[0]);
             setAvatar(url);
+
+            return () => URL.revokeObjectURL(url);
         }
     }, [fileValue]);
 
@@ -198,7 +205,7 @@ export default function ProfileEditForm({
                     placeholder="name"
                     {...register("name", { required: true })}
                 />
-                {/* <TextArea placeholder="about me" {...register("aboutMe")} /> */}
+                <TextArea placeholder="about me" {...register("aboutMe")} />
                 <Input
                     type="submit"
                     disabled={!nameValue}

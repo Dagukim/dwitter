@@ -59,11 +59,8 @@ const Username = styled.span`
     cursor: pointer;
 `;
 
-const Box = styled.div`
-    white-space: pre-wrap;
-`;
-
 const Payload = styled.p`
+    white-space: pre-wrap;
     font-size: 15px;
     line-height: 24px;
 `;
@@ -162,10 +159,10 @@ export default function Tweet({
                         onFinishEdit={onEditToggle}
                     />
                 ) : (
-                    <Box>
+                    <>
                         {tweet ? <Payload>{tweet}</Payload> : null}
                         {photo ? <Photo src={photo} alt="photo" /> : null}
-                    </Box>
+                    </>
                 )}
             </TweetBodyContainer>
         </Wrapper>

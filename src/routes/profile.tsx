@@ -1,4 +1,5 @@
 import Modal from "@/components/Modal/modal";
+import LoadingScreen from "@/components/loading-screen";
 import ProfileEditForm from "@/components/profile-edit-form";
 import { ITweet } from "@/components/timeline";
 import Tweet from "@/components/tweet";
@@ -8,6 +9,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     Unsubscribe,
     collection,
+    doc,
+    getDoc,
     limit,
     onSnapshot,
     orderBy,
@@ -28,7 +31,7 @@ const InfoContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
 `;
 
@@ -56,6 +59,7 @@ const Name = styled.span`
 const AboutMe = styled.pre`
     white-space: pre-wrap;
     word-break: break-all;
+    line-height: 24px;
 `;
 
 const EditProfileButton = styled.button`
@@ -81,16 +85,21 @@ const Tweets = styled.div`
     gap: 10px;
 `;
 
+export type UserData = {
+    name: string;
+    avatar?: string | null;
+    aboutMe?: string | null;
+};
+
 export default function Profile() {
     const user = auth.currentUser;
-    const [avatar, setAvatar] = useState(user?.photoURL);
+    const [isLoading, setLoading] = useState<boolean>(false);
+    const [userData, setUserData] = useState<UserData>();
     const [showModal, setShowModal] = useState(false);
     const [tweets, setTweet] = useState<ITweet[]>([]);
     const [editingTweetId, setEditingTweetId] = useState<string | null>(null);
 
-    const openModal = () => {
-        setShowModal(true);
-    };
+    const openModal = () => setShowModal(true);
     const closeModal = () => setShowModal(false);
 
     const handleEdit = (tweetId: string) => {
@@ -98,7 +107,7 @@ export default function Profile() {
     };
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !userData) return;
         let unsubscribe: Unsubscribe | null = null;
         const fetchTweets = async () => {
             const tweetsQuery = query(
@@ -107,21 +116,19 @@ export default function Profile() {
                 orderBy("createdAt", "desc"),
                 limit(25)
             );
-            unsubscribe = onSnapshot(tweetsQuery, async (snapshot) => {
-                const tweets: ITweet[] = await Promise.all(
-                    snapshot.docs.map((doc) => {
-                        const { tweet, createdAt, userId, photo } = doc.data();
-                        return {
-                            tweet,
-                            createdAt,
-                            userId,
-                            username: user.displayName,
-                            photo,
-                            userAvatarUrl: avatar,
-                            id: doc.id,
-                        };
-                    })
-                );
+            unsubscribe = onSnapshot(tweetsQuery, (snapshot) => {
+                const tweets: ITweet[] = snapshot.docs.map((doc) => {
+                    const { tweet, createdAt, userId, photo } = doc.data();
+                    return {
+                        tweet,
+                        createdAt,
+                        userId,
+                        username: userData.name,
+                        photo,
+                        userAvatarUrl: userData.avatar,
+                        id: doc.id,
+                    };
+                });
                 setTweet(tweets);
             });
         };
@@ -130,20 +137,45 @@ export default function Profile() {
         return () => {
             unsubscribe && unsubscribe();
         };
-    }, [avatar, user?.displayName, user]);
+    }, [user, userData]);
 
-    return (
+    useEffect(() => {
+        if (!user) return;
+        const fetchUserData = async () => {
+            try {
+                setLoading(true);
+                const userRef = doc(db, "users", user.uid);
+                const userDocSnap = await getDoc(userRef);
+                if (userDocSnap.exists()) {
+                    setUserData({
+                        name: userDocSnap.data().username,
+                        avatar: userDocSnap.data().avatar,
+                        aboutMe: userDocSnap.data().aboutMe,
+                    });
+                }
+            } catch (e) {
+                console.log(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUserData();
+    }, [user]);
+
+    return isLoading ? (
+        <LoadingScreen />
+    ) : (
         <Wrapper>
             <InfoContainer>
                 <AvatarBox htmlFor="avatar">
-                    {avatar ? (
-                        <AvatarImg src={avatar} alt="avatar" />
+                    {userData?.avatar ? (
+                        <AvatarImg src={userData.avatar} alt="avatar" />
                     ) : (
                         <FontAwesomeIcon icon={faUser} size="2xl" />
                     )}
                 </AvatarBox>
-                <Name>{user?.displayName ?? "Anonymous"}</Name>
-                <AboutMe>about me</AboutMe>
+                <Name>{userData?.name ?? "Anonymous"}</Name>
+                <AboutMe>{userData?.aboutMe}</AboutMe>
                 <EditProfileButton onClick={openModal}>
                     edit profile
                     <FontAwesomeIcon icon={faPen} size="1x" />
@@ -163,7 +195,8 @@ export default function Profile() {
                 <Modal onClose={closeModal}>
                     <ProfileEditForm
                         userId={user.uid}
-                        setPhoto={setAvatar}
+                        userData={userData}
+                        setUserData={setUserData}
                         onClose={closeModal}
                     />
                 </Modal>
