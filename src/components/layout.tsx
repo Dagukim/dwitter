@@ -7,6 +7,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import ScrollToTop from "./util/scroll-to-top";
 
 const Wrapper = styled.div`
     display: grid;
@@ -92,6 +93,7 @@ export default function Layout() {
                 </MenuItem>
             </Menu>
             <Outlet />
+            <ScrollToTop />
         </Wrapper>
     );
 }
