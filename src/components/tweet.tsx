@@ -111,12 +111,7 @@ export default function Tweet({
         try {
             await deleteDoc(doc(db, "tweets", id));
             if (photo) {
-                const photoRef = ref(
-                    storage,
-                    `tweets/${user.uid}-${
-                        user.displayName || "Anonymous"
-                    }/${id}`
-                );
+                const photoRef = ref(storage, `tweets/${user.uid}/${id}`);
                 await deleteObject(photoRef);
             }
         } catch (e) {
